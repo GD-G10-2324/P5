@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "bitcoin-hash-stream"
+version = "0.1.0"
+description = "Práctica 5 de Gestión de Datos (2023-24)"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+kafka-python = "^2.0.2"
+matplotlib = "^3.8.4"
+requests = "^2.31.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
