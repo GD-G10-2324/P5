@@ -1,14 +1,14 @@
 import threading
 import time
 import requests
-from kafka import KafkaConsumer, KafkaProducer
+import logging
 import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
+from kafka import KafkaConsumer, KafkaProducer
 from collections import deque
 from datetime import datetime as dt
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
-import logging
 
 # Constantes globales
 TOPIC_NAME = 'HelloKafka'
@@ -20,12 +20,15 @@ DEGREES = 60
 bootstrap_servers = ['localhost:9092']
 STYLE = 'seaborn-v0_8-pastel'
 
-# Configuración logs
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(threadName)s %(levelname)s %(message)s', filename=str(
-    dt.now().replace(microsecond=0)).replace(':', '-').replace(' ', '-')+'.log', filemode='a')
+def get_actual_time():
+    """Método auxiliar para obtención de tiempos sin microsegundos"""
+    return dt.now().replace(microsecond=0)
 
-# Clase productora de mensajes Kafka, para valores de Bitcoin y Hash-Rate
+# Configuración logs
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(threadName)s %(levelname)s %(message)s', filename=str(get_actual_time()).replace(':', '-').replace(' ', '-')+'.log', filemode='a')
+
 class BitcoinGetter(threading.Thread):
+    """Clase productora de mensajes Kafka, para valores de Bitcoin y Hash-Rate"""
     def __init__(self):
         self.server = bootstrap_servers[0]
         self.topic = TOPIC_NAME
@@ -49,8 +52,10 @@ class BitcoinGetter(threading.Thread):
             logging.warning(e)
             exit(-1)
 
-# Clase consumidora de mensajes Kafka, con gráfica animada incluida
-class Plotter(threading.Thread):
+
+
+class Plotter:
+    """Clase consumidora de mensajes Kafka, con gráfica animada incluida"""
     def __init__(self):
         self.bootstrap_servers = bootstrap_servers
         self.topic = TOPIC_NAME
@@ -83,14 +88,11 @@ class Plotter(threading.Thread):
         my_labels = [l.get_label() for l in both_lines]
         self.fig.legend(both_lines, my_labels, loc='upper right')
 
-    def get_actual_time(self):
-        return dt.now().replace(microsecond=0)
-
     def update(self, i):
         for _, messages in self.consumer.poll(timeout_ms=100).items():
             for message in messages:
                 values = message.value.decode('utf-8').split(':')
-                date = self.get_actual_time()
+                date = get_actual_time()
                 if date not in self.times:
                     self.times.append(date)
                     self.bitcoin.append(float(values[0]))
@@ -109,8 +111,10 @@ class Plotter(threading.Thread):
                             interval=INTERVAL, cache_frame_data=False)
         plt.show()
 
-# Gestor de hilos
+
+
 class KafkaThreadManager:
+    """Gestor de hilos"""
     def __init__(self):
         self.producer = BitcoinGetter()
         self.plotter = Plotter()
